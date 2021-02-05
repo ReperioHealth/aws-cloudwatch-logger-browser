@@ -1,6 +1,6 @@
 {
-  "name": "aws-cloudwatch-log-browser",
-  "version": "0.1.3",
+  "name": "@reperiohealth/aws-cloudwatch-log-browser",
+  "version": "0.1.4",
   "description": "Fast & Simple Logging to AWS CloudWatch",
   "main": "index.js",
   "scripts": {
@@ -36,5 +36,8 @@
   "devDependencies": {
     "eslint": "^4.13.1",
     "standard-version": "^9.1.0"
+  },
+  "bugs": {
+    "url": "https://github.com/ckckchoudhary/aws-cloudwatch-logger-browser/issues"
   }
 }
