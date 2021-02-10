@@ -29,10 +29,19 @@ const getRequestParams = (method, region, payload, keys={}) => {
 	if (payload)
 		opts.body = JSON.stringify(payload)
 
-	if (keys.accessKeyId && keys.secretAccessKey)
-		aws4.sign(opts, { accessKeyId: keys.accessKeyId, secretAccessKey: keys.secretAccessKey })
-	else
+	if (keys.accessKeyId && keys.secretAccessKey) {
+		const creds = {
+			accessKeyId: keys.accessKeyId,
+			secretAccessKey: keys.secretAccessKey
+		}
+		if (keys.sessionToken) {
+			creds.sessionToken = keys.sessionToken
+		}
+		aws4.sign(opts, creds)
+	}
+	else {
 		aws4.sign(opts)
+	}
 
 	return {
 		uri: `https://${opts.hostname}${opts.path}`,
@@ -40,7 +49,7 @@ const getRequestParams = (method, region, payload, keys={}) => {
 	}
 }
 
-const createLogStream = (logStreamName, { logGroupName, region, accessKeyId, secretAccessKey, local }) => {
+const createLogStream = (logStreamName, { logGroupName, region, accessKeyId, secretAccessKey, sessionToken, local }) => {
 	if (local && local != 'false')
 		return Promise.resolve({ message: 'No need to create stream. Local mode is on.' })
 
@@ -61,7 +70,7 @@ const createLogStream = (logStreamName, { logGroupName, region, accessKeyId, sec
 		logStreamName: logStreamName
 	}
 
-	const { uri, headers } = getRequestParams(service, region, payload, { accessKeyId, secretAccessKey })
+	const { uri, headers } = getRequestParams(service, region, payload, { accessKeyId, secretAccessKey, sessionToken })
 
 	const request = axios.create({
 		baseURL: uri,
@@ -69,7 +78,9 @@ const createLogStream = (logStreamName, { logGroupName, region, accessKeyId, sec
 	})
 
 	return request.post('', payload)
-		.then(results => results.data)
+		.then(results => {
+			return results.data
+		})
 		.catch(err => {
 			throw new Error(err.response.data.message)
 		})
@@ -185,7 +196,7 @@ const makeQuerablePromise = promise => {
 
 const _logbuffer = new WeakMap()
 const Logger = class {
-	constructor({ logGroupName, logStreamName, region, accessKeyId, secretAccessKey, uploadFreq, local }) {
+	constructor({ logGroupName, logStreamName, region, accessKeyId, secretAccessKey, sessionToken, uploadFreq, local }) {
 		if (!logGroupName)
 			throw new Error('Missing required argument: \'logGroupName\' is required.')
 		if (!logStreamName)
@@ -198,6 +209,10 @@ const Logger = class {
 			throw new Error('Missing required argument: \'accessKeyId\' is required.')
 
 		const keys = accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : {}
+
+		if (sessionToken) {
+			keys.sessionToken = sessionToken
+		}
 
 		let log
 		if (!uploadFreq || uploadFreq < 0) {
