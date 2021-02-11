@@ -8,6 +8,7 @@
 
 const axios = require('axios');
 const aws4  = require('./aws4-browser/aws4-crypto-js');
+const stringify = require('safe-stable-stringify')
 
 const getRequestParams = (method, region, payload, keys={}) => {
 	if (!region)
@@ -27,7 +28,7 @@ const getRequestParams = (method, region, payload, keys={}) => {
 	}
 
 	if (payload)
-		opts.body = JSON.stringify(payload)
+		opts.body = stringify(payload)
 
 	if (keys.accessKeyId && keys.secretAccessKey) {
 		const creds = {
@@ -217,7 +218,7 @@ const Logger = class {
 		let log
 		if (!uploadFreq || uploadFreq < 0) {
 			log = (...args) => {
-				const logs = (args || []).map(x => JSON.stringify(x))
+				const logs = (args || []).map(x => stringify(x))
 				// console.log('Logging now...')
 				// console.log(logs)
 				addLogsToStream(logs, logGroupName, logStreamName, region, keys)
@@ -227,7 +228,7 @@ const Logger = class {
 			log = (...args) => {
 				// 1. Accumulate all logs
 				const now = Date.now()
-				const logs = (args || []).map(x => ({ message: JSON.stringify(x), timestamp: now }))
+				const logs = (args || []).map(x => ({ message: stringify(x), timestamp: now }))
 				let latestBuffer = (_logbuffer.get(this) || { latest: now, data: [], job: null })
 				latestBuffer.data = latestBuffer.data.concat(logs)
 

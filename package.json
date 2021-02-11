@@ -31,6 +31,7 @@
     "axios": "^0.21.1",
     "crypto-js": "^3.1.9-1",
     "querystring": "^0.2.0",
+    "safe-stable-stringify": "^1.1.1",
     "url": "^0.11.0"
   },
   "devDependencies": {
