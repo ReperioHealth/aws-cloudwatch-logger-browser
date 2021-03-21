@@ -148,12 +148,10 @@ const addLogsToStream = (entry, logGroupName, logStreamName, region, keys={}, se
 
 	return retryCount > 3 || nothingToLog ? Promise.resolve(null) : request.post('', payload)
 		.then(results => {
-			//console.log('Yes')
 			const token = results.data.nextSequenceToken
 			_sequenceTokens.set(tokenKey, token)
 		})
 		.catch(err => {
-			//console.log('Oops')
 			const token = err.response.data.expectedSequenceToken
 			if (token) {
 				_sequenceTokens.set(tokenKey, token)
@@ -161,7 +159,7 @@ const addLogsToStream = (entry, logGroupName, logStreamName, region, keys={}, se
 				return addLogsToStream(entry, logGroupName, logStreamName, region, keys, token, retryCount)
 			}
 			else 
-				console.error(err.response.data)
+				console.log(err.response.data)
 		})
 }
 
@@ -219,8 +217,6 @@ const Logger = class {
 		if (!uploadFreq || uploadFreq < 0) {
 			log = (...args) => {
 				const logs = (args || []).map(x => stringify(x))
-				// console.log('Logging now...')
-				// console.log(logs)
 				addLogsToStream(logs, logGroupName, logStreamName, region, keys)
 			}
 		}
@@ -236,13 +232,10 @@ const Logger = class {
 				if (!latestBuffer.job || !latestBuffer.job.isPending()) {
 					latestBuffer.job = makeQuerablePromise(delayFn(() => {
 						const { latest, data, job } = (_logbuffer.get(this) || { latest: now, data: [], job: null })
-						// console.log('Finally logging now...')
-						// console.log(data)
 						_logbuffer.set(this, { latest, data:[], job })
 						addLogsToStream(data, logGroupName, logStreamName, region, keys)
 					}, uploadFreq))
 				}
-				//console.log('Buffering logs now...')
 				// 3. In any case, memoize 
 				_logbuffer.set(this, latestBuffer)
 			}
